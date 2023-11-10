@@ -10,7 +10,6 @@ from cog import BasePredictor, Input, Path
 MODEL_ID = "stabilityai/stable-diffusion-2-inpainting"
 MODEL_CACHE = "diffusers-cache"
 
-
 class Predictor(BasePredictor):
     def setup(self):
         """Load the model into memory to make running multiple predictions efficient"""
@@ -34,7 +33,7 @@ class Predictor(BasePredictor):
             default=None
         ),
         image: Path = Input(
-            description="Inital image to generate variations of. Supproting images size with 512x512",
+            description="Inital image to generate variations of.",
         ),
         mask: Path = Input(
             description="Black and white image to use as mask for inpainting over the image provided. White pixels are inpainted and black pixels are preserved",
@@ -60,9 +59,12 @@ class Predictor(BasePredictor):
             seed = int.from_bytes(os.urandom(2), "big")
         print(f"Using seed: {seed}")
 
-        image = Image.open(image).convert("RGB").resize((512, 512))
+        image = Image.open(image).convert("RGB")
+        if max(image.size) > 7680:  # Check if the image is larger than 8K
+            raise ValueError("Image size is too large. Maximum supported size is 8K.")
+
         extra_kwargs = {
-            "mask_image": Image.open(mask).convert("RGB").resize(image.size),
+            "mask_image": Image.open(mask).convert("RGB"),
             "image": image
         }
 
